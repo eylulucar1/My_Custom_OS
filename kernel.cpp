@@ -1,5 +1,5 @@
 #include "types.h"
-
+#include "gdt.h"
 void clear_screen() {
     char *vidmem = (char *) 0xb8000;
     int i = 0;
@@ -29,5 +29,7 @@ extern "C" void callConstructors()
 extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber){
      clear_screen();
      printf("Merhaba DUnya! Isletim sistemim hazir.");
+     
+     GlobalDescriptorTable gdt;
      while(1);
 }
