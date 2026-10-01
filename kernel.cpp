@@ -1,5 +1,6 @@
 #include "types.h"
 #include "gdt.h"
+#include "interrupts.h"
 void clear_screen() {
     char *vidmem = (char *) 0xb8000;
     int i = 0;
@@ -60,6 +61,10 @@ extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber){
      printf("Merhaba DUnya! Isletim sistemim hazir.");
      
      GlobalDescriptorTable gdt;
+     InterruptManager interrupts(&gdt);
+     interrupts.Activate();
+
+while(1);
      while(1);
 }
 

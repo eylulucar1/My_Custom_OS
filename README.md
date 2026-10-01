@@ -1,23 +1,35 @@
 # Kendi İşletim Sistemimi Yazıyorum (C++ & Assembly)
-Bu depo, sıfırdan bir işletim sistemi çekirdeği(kernel) geliştirme sürecimdeki kodlarımı ve kişisel notlarımı içermektedir.
 
-### BÖLÜM 1 VE 2 : ÇEKİRDEK TEMELLERİ,EKRANA YAZI YAZDIRMA VE TEST OTOMASYONU ###
+Bu depo, sıfırdan bir işletim sistemi çekirdeği (kernel) geliştirme sürecimdeki kodlarımı ve kişisel notlarımı içermektedir.
 
-# Ne Yaptık ?
-- Bilgisarayarın doğrudan bizim kodlarımızı tanıması için bir başlatısı ('loader.s') ve temel bir C++  çekirdeği yazdık. Bellekteki ekran kartı(VGA) bölgesine müdahele ederek ekrana ilk metnimizi yazdırdık.
+## Bölüm 1 ve 2: Çekirdek Temelleri, Ekrana Yazı Yazdırma ve Test Otomasyonu
 
-# Test Sürecindeki Hamallıktan Nasıl Kurtulduk?
-- Her seferinde manuel ISO oluşturmak yerine 'Makefile' yazdık. Ağır sanal makineler yerine daha hızlı olan **QEMU** 'yu projeye entegre ettik. Artık terminale sadece 'make run' yazdığımızda sistem eski dosyaları siliyor,kodları derliyor,boot edilebilir bir ISO kalıbı üretiyor ve hızlıca çalıştırıyor.
+### Ne Yaptık?
+* Bilgisayarın doğrudan bizim kodlarımızı tanıması için bir başlatıcı (`loader.s`) ve temel bir C++ çekirdeği yazdık. Bellekteki ekran kartı (VGA) bölgesine müdahale ederek ekrana ilk metnimizi yazdırdık.
 
-### BÖLÜM 3 : GLOBAL DESCRIPTOR TABLE (GDT) ###
+### Test Sürecindeki Hamallıktan Nasıl Kurtulduk?
+* Her seferinde manuel ISO oluşturmak yerine `Makefile` yazdık. Ağır sanal makineler yerine daha hızlı olan **QEMU**'yu projeye entegre ettik. Artık terminale sadece `make run` yazdığımızda sistem eski dosyaları siliyor, kodları derliyor, boot edilebilir bir ISO kalıbı üretiyor ve hızlıca çalıştırıyor.
 
-# GDT Nedir? Neden Bu Kadar Karmaşık Bir Bellek Haritası Yazdık?
-- GDT, işlemciye belleğin fiziksel sınırlarını ve erişim haklarını anlatan bir haritadır. İşlemciye "Burası işletim sisteminin tam yetkili alanı, burasıysa diğer programların alanı." dememizi sağlar. Bu harita olmadan dışarıdan gelen donanım sinyallerini güvenle yakalayıp işleyebilmemiz mimari olarak imkansızdır.
+## Bölüm 3: Global Descriptor Table (GDT)
 
-### BÖLÜM 4: PORTLAR VE EKRAN YÖNETİMİ ##
+### GDT Nedir ve Neden Bu Kadar Karmaşık Bir Bellek Haritası Yazdık?
+* GDT, işlemciye belleğin fiziksel sınırlarını ve erişim haklarını anlatan bir haritadır. İşlemciye "Burası işletim sisteminin tam yetkili alanı, burasıysa diğer programların alanı" dememizi sağlar. Bu harita olmadan dışarıdan gelen donanım sinyallerini güvenle yakalayıp işleyebilmemiz mimari olarak imkansızdır.
 
-# Port (bağlantı noktası) Ne İşe Yarar ?
-- İşlemcinin diğer donanımlarla(klavye,fare,disk vb.) veri alışverişi yaptığı sanal kapılardır. Normalde Assembly ile yazılan karmaşık 'outb' ve 'inb' komutlarını C++ sınıfları (OOP) içine hapsederek, donanımlarla nesne yönelimli ve çok daha kolay iletişim kurabileceğimiz bir altyapı ('port.h' | 'port.cpp') hazırladık.
+## Bölüm 4: Portlar ve Ekran Yönetimi
 
-#Printf Yani Ekranı Nasıl Geliştirdik?
-- Bir imleç mantığı kurduk. Artık '\n' ile alt satıra geçebiliyor, yazılar sayfanın dışına taştığında ekranı otomatik olarak temizleyip en baştan başlayabiliyoruz.
+### Port (Bağlantı Noktası) Ne İşe Yarar?
+* İşlemcinin diğer donanımlarla (klavye, fare, disk vb.) veri alışverişi yaptığı sanal kapılardır. Normalde Assembly ile yazılan karmaşık `outb` ve `inb` komutlarını C++ sınıfları (OOP) içine hapsederek, donanımlarla nesne yönelimli ve çok daha kolay iletişim kurabileceğimiz bir altyapı (`port.h` ve `port.cpp`) hazırladık.
+
+### Printf Yani Ekranı Nasıl Geliştirdik?
+* Bir imleç mantığı kurduk. Artık `\n` ile alt satıra geçebiliyor, yazılar sayfanın dışına taştığında ekranı otomatik olarak temizleyip en baştan başlayabiliyoruz.
+
+## Bölüm 5: Donanım Kesmeleri (Interrupts) ve IDT
+
+### Kesme (Interrupt) Nedir ve IDT (Interrupt Descriptor Table) Ne İşe Yarar?
+* Kesme, klavye veya saat gibi donanımların işlemciye "Şu anki işini durdur ve bana bak!" deme şeklidir. IDT ise işlemciye bu sinyaller geldiğinde tam olarak hangi kodu çalıştırması gerektiğini gösteren haritadır. Tıpkı GDT'nin bellek sınırlarını çizmesi gibi, IDT de donanım sinyallerinin yollarını çizer.
+
+### Neden C++ İle Doğrudan Sinyal Yakalamak Yerine Araya Assembly (`interruptstubs.s`) Kodları Ekledik?
+* Dışarıdan aniden bir sinyal geldiğinde, işlemci o an başka bir programı çalıştırıyor olabilir. Mevcut sistemin çökmemesi için, Assembly ile işlemcinin o anki durumunu (register'ları) hafızaya güvenle kaydediyoruz (push). Ardından C++ fonksiyonumuzu (handler) çalıştırıp, işimiz bitince işlemcinin eski durumunu geri yüklüyoruz (pop).
+
+### PIC (Programmable Interrupt Controller) Çipi Ne İşe Yarar?
+* Donanımlar ile işlemci arasındaki trafik polisidir. İşlemcinin kendi sistem hataları ile dışarıdan gelen donanım sinyallerinin numaraları birbirine karışmasın diye, donanım sinyallerine matematiksel bir kaydırma (offset) uygular ve onları işlemciye sırayla iletir.
