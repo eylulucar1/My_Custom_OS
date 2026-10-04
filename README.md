@@ -33,3 +33,12 @@ Bu depo, sıfırdan bir işletim sistemi çekirdeği (kernel) geliştirme sürec
 
 ### PIC (Programmable Interrupt Controller) Çipi Ne İşe Yarar?
 * Donanımlar ile işlemci arasındaki trafik polisidir. İşlemcinin kendi sistem hataları ile dışarıdan gelen donanım sinyallerinin numaraları birbirine karışmasın diye, donanım sinyallerine matematiksel bir kaydırma (offset) uygular ve onları işlemciye sırayla iletir.
+
+## BÖlüm 6: Klavye Sürücüsü (Keyboard Driver)
+
+### İşlemci Sinyal Aldığında Neden Donuyordu ve Nasıl Çözdük?
+* İşlemci bir donanımdan sinyal aldığında, PIC çipine "Mesajı aldım, sıradaki işleme geçebilirsin" demek zorundadır. Bunu demezsek sistem yeni sinyal kabul etmez ve kilitlenir. 'interrupts.cpp' içinde PIC'e cevap verme mekanizmasını kuracak bu sorunu çözdük.
+
+### Klavyedeki Tuşları Nasıl Okuyoruz?
+* Klavye ile iletişim için Port 0x60 (veri) ve Port 0x64 (komut) kapılarını dinliyoruz. Klavyeden bir tuşa basıldığında bize harfin kendisi değil, donanımsal bi sayı gelir. SÜrücümüzün içine bir çevirici yazarak bu sayıları harflere dönüştürdük. Böylece işletim sistemimizin ilk gerçek donanım sürücüsünü yazmış olduk.
+
