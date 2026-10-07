@@ -2,6 +2,7 @@
 #include "gdt.h"
 #include "interrupts.h"
 #include "keyboard.h"
+#include "mouse.h"
 void clear_screen() {
     char *vidmem = (char *) 0xb8000;
     int i = 0;
@@ -65,6 +66,7 @@ extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber){
      
      InterruptManager interrupts(&gdt);
      KeyboardDriver keyboard(&interrupts);
+     MouseDriver mouse(&interrupts);
      interrupts.Activate();
 
 while(1);

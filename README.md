@@ -42,3 +42,14 @@ Bu depo, sıfırdan bir işletim sistemi çekirdeği (kernel) geliştirme sürec
 ### Klavyedeki Tuşları Nasıl Okuyoruz?
 * Klavye ile iletişim için Port 0x60 (veri) ve Port 0x64 (komut) kapılarını dinliyoruz. Klavyeden bir tuşa basıldığında bize harfin kendisi değil, donanımsal bi sayı gelir. Sürücümüzün içine bir çevirici yazarak bu sayıları harflere dönüştürdük. Böylece işletim sistemimizin ilk gerçek donanım sürücüsünü yazmış olduk.
 
+
+## Bölüm 7: Klavye ve Fare Sürücüleri (Donanımla Etkileşim)
+
+### Fare (Mouse) Sürücüsünün Mantığı Nedir?
+* Fare, her hareket ettiğinde veya tıklandığında işlemciye 3 parça (byte) veri yollar: Tıklama durumu, X ekseni hareketi ve Y ekseni hareketi.
+* Bu üç veriyi bir tamponda (buffer) toplayarak okuduk ve farenin bulunduğu kordinattaki ekran bellek piksellerinin (VGA) arka plan/ön plan renklerini ters çevirerek (bitwise shift işlemleriyle) ekranda görsel bir imleç oluşturduk.
+
+### Karşılaştığımız Kritik Hata: PS/2 Veri Hattı Çakışması
+* Fare imleci hareket ederken klavye tamamen kilitlendi ve tepki vermedi.Klavye ve fare anakart üzerindeki aynı PS/2 kontrolcüsünü paylaşır. Klavye uyanma komutu aldığında hatta `0xFA` (uyandım) onay mesajı bırakır. Biz bu mesajı okuyup hattı temizlemeden fare sürücüsünü başlattığımız için, fare bu mesajı kendi donanım ayarı zannedip okuyor ve klavyenin kesme sinyallerini kilitliyordu.
+* Klavye sürücüsünün yapıcı fonksiyonunun (constructor) en sonuna fazladan bir `dataport.Read()` ekleyerek hattı temizledik (onay mesajını yuttuk) ve iki donanımın aynı anda kusursuz çalışmasını sağladık.
+
