@@ -49,6 +49,18 @@ Bu depo, sıfırdan bir işletim sistemi çekirdeği (kernel) geliştirme sürec
 * Fare, her hareket ettiğinde veya tıklandığında işlemciye 3 parça (byte) veri yollar: Tıklama durumu, X ekseni hareketi ve Y ekseni hareketi.
 * Bu üç veriyi bir tamponda (buffer) toplayarak okuduk ve farenin bulunduğu kordinattaki ekran bellek piksellerinin (VGA) arka plan/ön plan renklerini ters çevirerek (bitwise shift işlemleriyle) ekranda görsel bir imleç oluşturduk.
 
+## Bölüm 8: Sürücü Soyutlaması (Driver Abstraction) ve Olay Yöneticileri
+
+### Neden Sürücüleri Soyutladık? (Abstraction)
+* Önceki bölümlerde klavye ve fare sürücülerimiz doğrudan ekran belleğine (VGA) müdahale edip `printf` ile pikselleri boyuyordu. Bu yapı, ileride siyah terminal ekranından çıkıp pencereli bir Grafik Arayüzüne (GUI) geçtiğimizde büyük bir tasarım karmaşasına yol açacaktı. Donanımın görevi ekrana yazı yazmak değil, sadece donanımsal veriyi (örneğin "tuşa basıldı") işletim sistemine iletmektir.
+
+### Ne Yaptık? (OOP Mimarisinin Gücü)
+* **`Driver` ve `DriverManager` Sınıfları:** Tüm donanım sürücülerinin türeyeceği ortak bir ata (base) sınıf oluşturduk. `DriverManager` sayesinde sistemdeki klavye, fare (ve ileride eklenecek ağ kartı vb.) tüm sürücüleri tek bir liste içine alıp, hepsini tek satırda (`ActivateAll`) başlatabilir hale geldik.
+* **Olay Yöneticileri (Event Handlers):** Donanım (sürücü) ile yazılım (çekirdek) arasına `KeyboardEventHandler` ve `MouseEventHandler` adında bağımsız köprüler kurduk.
+* Artık klavyeden 'A' tuşuna basıldığında klavye sürücüsü ekrana 'A' *yazdırmıyor*. Bunun yerine çekirdeğe (kernel) "A tuşuna basıldı" olayı (event) fırlatıyor. Çekirdek (`kernel.cpp`) kendi içindeki özel sınıflarla (`PrintfKeyboardEventHandler`, `MouseToConsole`) bu olayı yakalayıp ekranda gösteriyor.
+
+### Sonuç
+Sistemimiz tamamen **Modüler** hale geldi. Yarın grafik arayüze (GUI) geçtiğimizde sürücü (`.cpp`) kodlarımıza hiç dokunmadan, sadece Kernel tarafındaki yöneticileri değiştirerek işletim sistemimizi güncelleyebileceğiz.
 ### Karşılaştığımız Kritik Hata: PS/2 Veri Hattı Çakışması
 * Fare imleci hareket ederken klavye tamamen kilitlendi ve tepki vermedi.Klavye ve fare anakart üzerindeki aynı PS/2 kontrolcüsünü paylaşır. Klavye uyanma komutu aldığında hatta `0xFA` (uyandım) onay mesajı bırakır. Biz bu mesajı okuyup hattı temizlemeden fare sürücüsünü başlattığımız için, fare bu mesajı kendi donanım ayarı zannedip okuyor ve klavyenin kesme sinyallerini kilitliyordu.
 * Klavye sürücüsünün yapıcı fonksiyonunun (constructor) en sonuna fazladan bir `dataport.Read()` ekleyerek hattı temizledik (onay mesajını yuttuk) ve iki donanımın aynı anda kusursuz çalışmasını sağladık.
