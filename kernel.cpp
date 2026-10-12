@@ -1,8 +1,48 @@
 #include "types.h"
 #include "gdt.h"
 #include "interrupts.h"
+#include "driver.h"
 #include "keyboard.h"
 #include "mouse.h"
+void printf(char* str);
+class PrintfKeyboardEventHandler : public KeyboardEventHandler
+{
+    public:
+        void OnKeyDown(char c)
+        {
+            char* foo = " ";
+            foo[0] = c;
+            printf(foo);
+        }
+};
+
+class MouseToConsole : public MouseEventHandler
+{
+    int8_t x, y;
+    public:
+        MouseToConsole() { x = 40; y = 12; }
+        
+        void OnMouseMove(int xoffset, int yoffset)
+        {
+            static uint16_t* VideoMemory = (uint16_t*)0xb8000;
+           
+            VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xF000) >> 4)
+                                | ((VideoMemory[80*y+x] & 0x0F00) << 4)
+                                | ((VideoMemory[80*y+x] & 0x00FF));
+            
+            x += xoffset;
+            if(x < 0) x = 0;
+            if(x >= 80) x = 79;
+            y += yoffset;
+            if(y < 0) y = 0;
+            if(y >= 25) y = 24;
+            
+          
+            VideoMemory[80*y+x] = ((VideoMemory[80*y+x] & 0xF000) >> 4)
+                                | ((VideoMemory[80*y+x] & 0x0F00) << 4)
+                                | ((VideoMemory[80*y+x] & 0x00FF));
+        }
+};
 void clear_screen() {
     char *vidmem = (char *) 0xb8000;
     int i = 0;
@@ -12,8 +52,8 @@ void clear_screen() {
        i = i + 2;
     }
 }
-void printf(char* str)
-{
+
+void printf(char* str){
     static uint16_t* VideoMemory = (uint16_t*)0xb8000;
 
     static uint8_t x=0, y=0;
@@ -58,18 +98,33 @@ extern "C" void callConstructors()
 }
 
 
-extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber){
+extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber)
+{
      clear_screen();
-     printf("Merhaba DUnya! Isletim sistemim hazir.");
+     printf("Hello World! My Operating System is ready.\n");
      
      GlobalDescriptorTable gdt;
-     
      InterruptManager interrupts(&gdt);
-     KeyboardDriver keyboard(&interrupts);
-     MouseDriver mouse(&interrupts);
+     
+     printf("Initializing Hardware, Stage 1\n");
+     
+     DriverManager drvManager;
+     
+
+     PrintfKeyboardEventHandler kbhandler;
+     KeyboardDriver keyboard(&interrupts, &kbhandler);
+     drvManager.AddDriver(&keyboard);
+      
+
+     MouseToConsole mousehandler;
+     MouseDriver mouse(&interrupts, &mousehandler);
+     drvManager.AddDriver(&mouse);
+     
+     printf("Initializing Hardware, Stage 2\n");    
+     drvManager.ActivateAll();
+     
+     printf("Initializing Hardware, Stage 3\n");
      interrupts.Activate();
 
-while(1);
      while(1);
 }
-

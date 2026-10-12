@@ -1,12 +1,26 @@
 #include "keyboard.h"
 
 void printf(char* str);
+KeyboardEventHandler::KeyboardEventHandler() {}
+KeyboardEventHandler::~KeyboardEventHandler() {}
+void KeyboardEventHandler::OnKeyDown(char) {}
+void KeyboardEventHandler::OnKeyUp(char) {}
 
-KeyboardDriver::KeyboardDriver(InterruptManager* manager)
+KeyboardDriver::KeyboardDriver(InterruptManager* manager, KeyboardEventHandler* handler)
 : InterruptHandler(0x21, manager),
 dataport(0x60),
 commandport(0x64)
 {
+    this->handler = handler;
+}
+
+KeyboardDriver::~KeyboardDriver()
+{
+}
+
+void KeyboardDriver::Activate()
+{
+
     while(commandport.Read() & 0x1)
         dataport.Read();
     
@@ -18,10 +32,6 @@ commandport(0x64)
     dataport.Write(0xF4); 
     
     dataport.Read(); 
-}
-
-KeyboardDriver::~KeyboardDriver()
-{
 }
 
 uint32_t KeyboardDriver::HandleInterrupt(uint32_t esp)

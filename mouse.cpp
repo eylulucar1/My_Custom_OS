@@ -1,11 +1,25 @@
 #include "mouse.h"
 
 void printf(char* str);
+MouseEventHandler::MouseEventHandler() {}
+MouseEventHandler::~MouseEventHandler() {}
+void MouseEventHandler::OnActivate() {}
+void MouseEventHandler::OnMouseDown(uint8_t button) {}
+void MouseEventHandler::OnMouseUp(uint8_t button) {}
+void MouseEventHandler::OnMouseMove(int x, int y) {}
 
-MouseDriver::MouseDriver(InterruptManager* manager)
+MouseDriver::MouseDriver(InterruptManager* manager, MouseEventHandler* handler)
 : InterruptHandler(0x2C, manager),
 dataport(0x60),
 commandport(0x64)
+{
+    this->handler = handler;
+}
+
+MouseDriver::~MouseDriver()
+{
+}
+void MouseDriver::Activate()
 {
     offset = 0;
     buttons = 0;
@@ -23,10 +37,6 @@ commandport(0x64)
     commandport.Write(0xD4);
     dataport.Write(0xF4); 
     dataport.Read();
-}
-
-MouseDriver::~MouseDriver()
-{
 }
 
 void printf(char*);
