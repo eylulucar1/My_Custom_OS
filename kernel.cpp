@@ -4,6 +4,7 @@
 #include "driver.h"
 #include "keyboard.h"
 #include "mouse.h"
+#include "pci.h"
 void printf(char* str);
 class PrintfKeyboardEventHandler : public KeyboardEventHandler
 {
@@ -51,6 +52,15 @@ void clear_screen() {
        vidmem[i+1] = 0x0f;
        i = i + 2;
     }
+}
+
+void printfHex(uint8_t key)
+{
+    char* hex = "0123456789ABCDEF";
+    char foo[] = "00";
+    foo[0] = hex[(key >> 4) & 0x0F];
+    foo[1] = hex[key & 0x0F];
+    printf(foo);
 }
 
 void printf(char* str){
@@ -123,6 +133,9 @@ extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber)
      printf("Initializing Hardware, Stage 2\n");    
      drvManager.ActivateAll();
      
+     PeripheralComponentInterconnectController pciController;
+     pciController.SelectDrivers(&drvManager, &interrupts);
+    
      printf("Initializing Hardware, Stage 3\n");
      interrupts.Activate();
 

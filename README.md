@@ -1,43 +1,88 @@
+# Building My Own Operating System (C++ & Assembly)
+
+*Türkçe versiyonu aşağıdadır / Turkish version is below.*
+
+This repository contains the source code and my personal dev log for a custom OS kernel I'm building from scratch.
+
+### Chapters 1 & 2: Booting & Tooling
+
+* Wrote a basic assembly bootloader (`loader.s`) and a minimal C++ kernel to print text directly to the VGA buffer.
+* Got tired of generating manual ISOs, so I wrote a `Makefile` and integrated QEMU. Now, a simple `make run` cleans, compiles, builds the ISO, and spins up the VM instantly.
+
+### Chapter 3: Global Descriptor Table (GDT)
+
+* Implemented the GDT to define physical memory boundaries and privileges. It sets the hard lines between "kernel space" and "user space." You can't safely handle hardware interrupts without this foundation.
+
+### Chapter 4: I/O Ports & Screen Management
+
+* Wrapped the ugly low-level Assembly `inb` and `outb` instructions into clean C++ classes (`port.h`, `port.cpp`).
+* Built a custom `printf` implementation that tracks the cursor, handles newlines (`\n`), and clears the screen automatically when the terminal fills up.
+
+### Chapter 5: Interrupts & IDT
+
+* Set up the Interrupt Descriptor Table (IDT) and programmed the PIC to route hardware signals.
+* Since interrupts can hit at any time, I wrote Assembly stubs (`interruptstubs.s`) to safely push CPU registers to the stack before handing the signal to C++, preventing total system crashes.
+
+### Chapter 6: Keyboard Driver
+
+* Fixed a major lockup issue: the CPU was freezing because it didn't send an "Acknowledge" (ACK) signal back to the PIC.
+* Started polling Port 0x60 and 0x64, mapping raw hardware scancodes to actual ASCII characters.
+
+### Chapter 7: Mouse Driver & The PS/2 Collision
+
+* Wrote a mouse driver that reads 3-byte packets to render a moving cursor via bitwise VGA color shifting.
+* **Bug Fix:** Hit a nasty hardware quirk where moving the mouse permanently locked up the keyboard. Both share the PS/2 controller, and the keyboard was leaving a raw `0xFA` (ACK) byte on the bus on startup. The mouse read this junk data, corrupting the bus. Fixed it by doing a dummy read during keyboard initialization to flush the pipeline.
+
+### Chapter 8: Driver Abstractions & Event Handlers
+
+* Ripped out all the hardcoded `printf` calls from the drivers. Hardware shouldn't care about rendering text.
+* Built an event-driven architecture (`DriverManager`, `KeyboardEventHandler`). Now, the driver just broadcasts a "key pressed" event, and the kernel handles the UI implementation. This makes the OS ready for a real GUI later.
+
+### Chapters 10 & 11: PCI & Base Address Registers (BARs)
+
+* Wrote a PCI controller to scan the motherboard's buses, devices, and functions.
+* The OS can now dynamically discover plugged-in hardware (like AMD network chips or VGA graphics cards) using their Vendor and Device IDs.
+* By reading the Base Address Registers (BARs), the kernel automatically figures out which I/O ports or memory maps each device uses. I no longer have to hardcode hardware ports!
+
+---
+
 # Kendi İşletim Sistemimi Yazıyorum (C++ & Assembly)
 
-Bu depo, sıfırdan bir işletim sistemi çekirdeği (kernel) geliştirme sürecimdeki kodlarımı ve kişisel notlarımı içermektedir.
+Bu repo, sıfırdan geliştirdiğim işletim sistemi çekirdeğinin (kernel) kaynak kodlarını ve kişisel geliştirme günlüğümü (dev log) içeriyor.
 
-## Bölüm 1 ve 2: Çekirdek Temelleri, Ekrana Yazı Yazdırma ve Test Otomasyonu
+### Bölüm 1 ve 2: Bootloader & Test Otomasyonu
 
-### Ne Yaptık?
-* Bilgisayarın doğrudan bizim kodlarımızı tanıması için bir başlatıcı (`loader.s`) ve temel bir C++ çekirdeği yazdık. Bellekteki ekran kartı (VGA) bölgesine müdahale ederek ekrana ilk metnimizi yazdırdık.
+* Sistemi ayağa kaldırmak için `loader.s` ile küçük bir assembly başlatıcısı yazdım ve VGA belleğine doğrudan müdahale ederek ekrana ilk çıktıyı aldım.
+* Sürekli manuel ISO oluşturma hamallığından kurtulmak için projeye Makefile ve QEMU entegre ettim. Artık tek bir `make run` komutuyla her şey derlenip sanal makine saniyeler içinde açılıyor.
 
-### Test Sürecindeki Hamallıktan Nasıl Kurtulduk?
-* Her seferinde manuel ISO oluşturmak yerine `Makefile` yazdık. Ağır sanal makineler yerine daha hızlı olan **QEMU**'yu projeye entegre ettik. Artık terminale sadece `make run` yazdığımızda sistem eski dosyaları siliyor, kodları derliyor, boot edilebilir bir ISO kalıbı üretiyor ve hızlıca çalıştırıyor.
+### Bölüm 3: Global Descriptor Table (GDT)
 
-## Bölüm 3: Global Descriptor Table (GDT)
+* İşlemciye bellek sınırlarını ve erişim yetkilerini (kernel vs. user space) tanımlamak için GDT'yi kurdum. Bu harita olmadan donanımdan gelen anlık sinyalleri (interrupts) sistemi çökertmeden yakalamak mimari olarak imkansızdı.
 
-### GDT Nedir ve Neden Bu Kadar Karmaşık Bir Bellek Haritası Yazdık?
-* GDT, işlemciye belleğin fiziksel sınırlarını ve erişim haklarını anlatan bir haritadır. İşlemciye "Burası işletim sisteminin tam yetkili alanı, burasıysa diğer programların alanı" dememizi sağlar. Bu harita olmadan dışarıdan gelen donanım sinyallerini güvenle yakalayıp işleyebilmemiz mimari olarak imkansızdır.
+### Bölüm 4: I/O Portları & Ekran Yönetimi
 
-## Bölüm 4: Portlar ve Ekran Yönetimi
+* İşlemcinin disk, klavye gibi donanımlarla konuşmasını sağlayan Assembly `inb` ve `outb` komutlarını nesne yönelimli C++ sınıfları (OOP) haline getirdim.
+* Kendi `printf` fonksiyonumu yazarak alt satıra geçebilen (`\n`) ve ekran dolduğunda sayfayı temizleyen bir imleç (cursor) mantığı kurdum.
 
-### Port (Bağlantı Noktası) Ne İşe Yarar?
-* İşlemcinin diğer donanımlarla (klavye, fare, disk vb.) veri alışverişi yaptığı sanal kapılardır. Normalde Assembly ile yazılan karmaşık `outb` ve `inb` komutlarını C++ sınıfları (OOP) içine hapsederek, donanımlarla nesne yönelimli ve çok daha kolay iletişim kurabileceğimiz bir altyapı (`port.h` ve `port.cpp`) hazırladık.
+### Bölüm 5: IDT ve Kesmeler (Interrupts)
 
-### Printf Yani Ekranı Nasıl Geliştirdik?
-* Bir imleç mantığı kurduk. Artık `\n` ile alt satıra geçebiliyor, yazılar sayfanın dışına taştığında ekranı otomatik olarak temizleyip en baştan başlayabiliyoruz.
+* Donanım sinyallerini yakalamak için IDT haritasını çıkardım ve sinyal trafiğini yönetsin diye PIC çipini programladım.
+* C++ doğrudan interrupt yakalarsa sistem patlayacağı için, araya Assembly (`interruptstubs.s`) ile CPU register'larını yedeğe alıp geri yükleyen (push/pop) köprü kodlar yazdım.
 
-## Bölüm 5: Donanım Kesmeleri (Interrupts) ve IDT
+### Bölüm 6: Klavye Sürücüsü
 
-### Kesme (Interrupt) Nedir ve IDT (Interrupt Descriptor Table) Ne İşe Yarar?
-* Kesme, klavye veya saat gibi donanımların işlemciye "Şu anki işini durdur ve bana bak!" deme şeklidir. IDT ise işlemciye bu sinyaller geldiğinde tam olarak hangi kodu çalıştırması gerektiğini gösteren haritadır. Tıpkı GDT'nin bellek sınırlarını çizmesi gibi, IDT de donanım sinyallerinin yollarını çizer.
+* Sistem donanım sinyali aldığında PIC'e "ACK" (onay) göndermediği için kilitleniyordu, bunu çözdüm.
+* 0x60 portu üzerinden klavyeyi dinleyip gelen donanımsal tuş kodlarını (scancodes) ASCII harflere çeviren ilk gerçek sürücüyü tamamladım.
 
-### Neden C++ İle Doğrudan Sinyal Yakalamak Yerine Araya Assembly (`interruptstubs.s`) Kodları Ekledik?
-* Dışarıdan aniden bir sinyal geldiğinde, işlemci o an başka bir programı çalıştırıyor olabilir. Mevcut sistemin çökmemesi için, Assembly ile işlemcinin o anki durumunu (register'ları) hafızaya güvenle kaydediyoruz (push). Ardından C++ fonksiyonumuzu (handler) çalıştırıp, işimiz bitince işlemcinin eski durumunu geri yüklüyoruz (pop).
+### Bölüm 7: Fare Sürücüsü ve PS/2 Çakışması
 
-### PIC (Programmable Interrupt Controller) Çipi Ne İşe Yarar?
-* Donanımlar ile işlemci arasındaki trafik polisidir. İşlemcinin kendi sistem hataları ile dışarıdan gelen donanım sinyallerinin numaraları birbirine karışmasın diye, donanım sinyallerine matematiksel bir kaydırma (offset) uygular ve onları işlemciye sırayla iletir.
+* Fareden gelen 3 byte'lık veri paketlerini okuyup ekrandaki piksellerin renklerini ters çevirerek hareket eden bir imleç render ettim.
+* **Bug Fix:** Fareyi hareket ettirince klavyenin kilitlendiği iğrenç bir donanım bug'ıyla boğuştum. Klavye uyanırken ortak PS/2 veri yolunda `0xFA` sinyali bırakıyordu ve fare bunu kendi konfigürasyonu sanıp sistemi kilitliyordu. Klavye constructor'ına tek satırlık bir "dummy read" (boş okuma) ekleyerek veri yolunu temizledim ve sorunu çözdüm.
 
-## BÖlüm 6: Klavye Sürücüsü (Keyboard Driver)
+### Bölüm 8: Sürücü Soyutlaması (Abstraction)
 
-### İşlemci Sinyal Aldığında Neden Donuyordu ve Nasıl Çözdük?
-* İşlemci bir donanımdan sinyal aldığında, PIC çipine "Mesajı aldım, sıradaki işleme geçebilirsin" demek zorundadır. Bunu demezsek sistem yeni sinyal kabul etmez ve kilitlenir. 'interrupts.cpp' içinde PIC'e cevap verme mekanizmasını kuracak bu sorunu çözdük.
+* Sürücülerin içindeki amele `printf` kodlarını tamamen sildim; donanımın görevi ekrana yazı yazmak değildir.
+* Olay tabanlı (event-driven) bir mimari kurdum. Artık klavye sürücüsü sadece "tuşa basıldı" eventi fırlatıyor, bu veriyi ekranda gösterme işini Kernel üstleniyor. Bu hamle sistemi ileride pencereli bir GUI'a geçmeye hazır hale getirdi.
 
 ### Klavyedeki Tuşları Nasıl Okuyoruz?
 * Klavye ile iletişim için Port 0x60 (veri) ve Port 0x64 (komut) kapılarını dinliyoruz. Klavyeden bir tuşa basıldığında bize harfin kendisi değil, donanımsal bi sayı gelir. Sürücümüzün içine bir çevirici yazarak bu sayıları harflere dönüştürdük. Böylece işletim sistemimizin ilk gerçek donanım sürücüsünü yazmış olduk.
@@ -64,4 +109,7 @@ Sistemimiz tamamen **Modüler** hale geldi. Yarın grafik arayüze (GUI) geçti�
 ### Karşılaştığımız Kritik Hata: PS/2 Veri Hattı Çakışması
 * Fare imleci hareket ederken klavye tamamen kilitlendi ve tepki vermedi.Klavye ve fare anakart üzerindeki aynı PS/2 kontrolcüsünü paylaşır. Klavye uyanma komutu aldığında hatta `0xFA` (uyandım) onay mesajı bırakır. Biz bu mesajı okuyup hattı temizlemeden fare sürücüsünü başlattığımız için, fare bu mesajı kendi donanım ayarı zannedip okuyor ve klavyenin kesme sinyallerini kilitliyordu.
 * Klavye sürücüsünün yapıcı fonksiyonunun (constructor) en sonuna fazladan bir `dataport.Read()` ekleyerek hattı temizledik (onay mesajını yuttuk) ve iki donanımın aynı anda kusursuz çalışmasını sağladık.
-
+=======
+### Bölüm 10 ve 11: PCI ve BAR (Base Address Registers)
+* Anakarttaki PCI veri yolunu baştan sona tarayarak ekran kartı, ağ kartı gibi cihazları (Vendor ID / Device ID) dinamik olarak bulan bir PCI controller yazdım.
+* Donanımların Base Address Register'larını (BAR) okuyarak hangi I/O portlarından haberleştiklerini sistemin kendisinin bulmasını sağladım. Artık hiçbir donanım portunu kodun içine hardcode yazmak zorunda değilim!
