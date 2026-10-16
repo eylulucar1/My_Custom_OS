@@ -38,11 +38,18 @@ This repository contains the source code and my personal dev log for a custom OS
 * Ripped out all the hardcoded `printf` calls from the drivers. Hardware shouldn't care about rendering text.
 * Built an event-driven architecture (`DriverManager`, `KeyboardEventHandler`). Now, the driver just broadcasts a "key pressed" event, and the kernel handles the UI implementation. This makes the OS ready for a real GUI later.
 
-### Chapters 10 & 11: PCI & Base Address Registers (BARs)
+### Chapters 10 & 11: PCI (Motherboard Scanning) & BAR (Hardware Communication)
 
-* Wrote a PCI controller to scan the motherboard's buses, devices, and functions.
-* The OS can now dynamically discover plugged-in hardware (like AMD network chips or VGA graphics cards) using their Vendor and Device IDs.
-* By reading the Base Address Registers (BARs), the kernel automatically figures out which I/O ports or memory maps each device uses. I no longer have to hardcode hardware ports!
+**The Old Way (Why did we change it?)**
+* In previous chapters, we hardcoded the keyboard and mouse addresses directly into the code (e.g., "The keyboard is definitely at port 0x60"). This is like saying, "My friend definitely lives at house number 5." However, complex parts like graphics cards or network adapters are plugged into different slots on every computer. We can't memorize their addresses in advance.
+
+**1. The Upgrade: PCI (The Motherboard's Receptionist)**
+* Thanks to the **PCI (Peripheral Component Interconnect)** system we wrote, our OS stopped blindly guessing addresses. Now, it scans the entire motherboard and asks, "Who is in slot 1? Who is in slot 2?". The PCI acts like a receptionist, listing the identities of the hardware (Vendor ID and Device ID) by saying, "There is an Intel GPU here, and an AMD Network Card there." We finally upgraded the system to a true "Plug-and-Play" architecture.
+
+**2. The Upgrade: BAR (The Direct Phone Number)**
+* Finding the graphics card isn't enough; how do we send pixels and colors to it? This is where the **BAR (Base Address Register)** comes into play. The BAR is the direct communication box of that hardware. By reading the BAR value, our OS can figure out exactly which port address to use to talk to the device.
+
+**In summary:** We taught the system to automatically ask the hardware, *"Who are you, and at what number can I communicate with you?"*
 
 ---
 
@@ -110,6 +117,16 @@ Sistemimiz tamamen **Modüler** hale geldi. Yarın grafik arayüze (GUI) geçti�
 * Fare imleci hareket ederken klavye tamamen kilitlendi ve tepki vermedi.Klavye ve fare anakart üzerindeki aynı PS/2 kontrolcüsünü paylaşır. Klavye uyanma komutu aldığında hatta `0xFA` (uyandım) onay mesajı bırakır. Biz bu mesajı okuyup hattı temizlemeden fare sürücüsünü başlattığımız için, fare bu mesajı kendi donanım ayarı zannedip okuyor ve klavyenin kesme sinyallerini kilitliyordu.
 * Klavye sürücüsünün yapıcı fonksiyonunun (constructor) en sonuna fazladan bir `dataport.Read()` ekleyerek hattı temizledik (onay mesajını yuttuk) ve iki donanımın aynı anda kusursuz çalışmasını sağladık.
 =======
-### Bölüm 10 ve 11: PCI ve BAR (Base Address Registers)
-* Anakarttaki PCI veri yolunu baştan sona tarayarak ekran kartı, ağ kartı gibi cihazları (Vendor ID / Device ID) dinamik olarak bulan bir PCI controller yazdım.
-* Donanımların Base Address Register'larını (BAR) okuyarak hangi I/O portlarından haberleştiklerini sistemin kendisinin bulmasını sağladım. Artık hiçbir donanım portunu kodun içine hardcode yazmak zorunda değilim!
+## Bölüm 10 ve 11: PCI (Anakart Taraması) ve BAR (Donanımla İletişim)
+
+### Eskiden Ne Yapıyorduk? (Neden Değiştirdik?)
+* Eski bölümlerde klavye ve fare sürücülerini yazarken adreslerini kodun içine elle (hardcode) girmiştik (Örn: "Klavye kesin 0x60 portundadır"). Bu, "Arkadaşım kesin 5 numaralı evde oturuyor" demek gibidir. Ancak ekran kartı veya ağ kartı gibi parçalar her bilgisayarda farklı yuvalara takılır, adreslerini önceden ezbere bilemeyiz.
+
+### 1. Yenilik: PCI (Anakartın Resepsiyonisti)
+* Yazdığımız **PCI (Peripheral Component Interconnect)** sistemi sayesinde işletim sistemimiz körü körüne adres denemeyi bıraktı. Artık anakartı baştan sona tarayıp "1. yuvada kim var? 2. yuvada kim var?" diye sorabiliyor. PCI bize "Burada Intel Ekran Kartı var, şurada AMD Ağ Kartı var" diyerek donanımların kimliklerini (Vendor ID ve Device ID) listeliyor. Sistemi "Tak-Çalıştır" (Plug-and-Play) mantığına geçirdik.
+
+### 2. Yenilik: BAR (Doğrudan İletişim Kutusu)
+* Ekran kartını bulmak yetmez, ona pikselleri ve renkleri nasıl göndereceğiz? İşte burada **BAR (Base Address Register)** devreye giriyor. BAR, o donanımın iletişim kutusudur. İşletim sistemimiz cihazın BAR değerini okuyarak, "Ekran kartıyla haberleşmek istiyorsam verileri şu port adresine göndermeliyim" diyebiliyor.
+
+**Özetle:** Sisteme donanımlara "Sen kimsin ve seninle hangi numaradan haberleşebilirim?" diye otomatik olarak sormayı öğrettik!
+
