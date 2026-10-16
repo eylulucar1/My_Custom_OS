@@ -38,6 +38,7 @@ This repository contains the source code and my personal dev log for a custom OS
 * Ripped out all the hardcoded `printf` calls from the drivers. Hardware shouldn't care about rendering text.
 * Built an event-driven architecture (`DriverManager`, `KeyboardEventHandler`). Now, the driver just broadcasts a "key pressed" event, and the kernel handles the UI implementation. This makes the OS ready for a real GUI later.
 
+
 ### Chapters 10 & 11: PCI (Motherboard Scanning) & BAR (Hardware Communication)
 
 **The Old Way (Why did we change it?)**
@@ -51,10 +52,13 @@ This repository contains the source code and my personal dev log for a custom OS
 
 **In summary:** We taught the system to automatically ask the hardware, *"Who are you, and at what number can I communicate with you?"*
 =======
+=======
+>>>>>>> 46fe363 (docs: README güncellendi (Bölüm 10 ve 11 PCI/BAR eklendi))
 ### Chapters 10 & 11: PCI & Base Address Registers (BARs)
 
 * Wrote a PCI controller to scan the motherboard's buses, devices, and functions.
 * The OS can now dynamically discover plugged-in hardware (like AMD network chips or VGA graphics cards) using their Vendor and Device IDs.
+
 * By reading the Base Address Registers (BARs), the kernel automatically figures out which I/O ports or memory maps each device uses. I no longer have to hardcode hardware ports!)
 
 Chapters 12 & 13: Graphics Mode (VGA) & GUI Framework Basics
@@ -69,6 +73,10 @@ Since we are running in 32-bit protected mode, we can't cheat by using the easy 
 2. The Object-Oriented GUI Framework
 
 Using our new pixel-drawing superpower, we laid the foundation for a real graphical user interface. We created a base Widget class and built a Desktop and Window system on top of it. The OS now has a spatial awareness system: it can track mouse coordinates, calculate exactly which window or button you are hovering over, and pass click events to the right object.
+=======
+* By reading the Base Address Registers (BARs), the kernel automatically figures out which I/O ports or memory maps each device uses. I no longer have to hardcode hardware ports!
+
+>>>>>>> 46fe363 (docs: README güncellendi (Bölüm 10 ve 11 PCI/BAR eklendi))
 ---
 
 # Kendi İşletim Sistemimi Yazıyorum (C++ & Assembly)
@@ -109,7 +117,7 @@ Bu repo, sıfırdan geliştirdiğim işletim sistemi çekirdeğinin (kernel) kay
 * Sürücülerin içindeki amele `printf` kodlarını tamamen sildim; donanımın görevi ekrana yazı yazmak değildir.
 * Olay tabanlı (event-driven) bir mimari kurdum. Artık klavye sürücüsü sadece "tuşa basıldı" eventi fırlatıyor, bu veriyi ekranda gösterme işini Kernel üstleniyor. Bu hamle sistemi ileride pencereli bir GUI'a geçmeye hazır hale getirdi.
 
-<<<<<<< HEAD
+
 ### Klavyedeki Tuşları Nasıl Okuyoruz?
 * Klavye ile iletişim için Port 0x60 (veri) ve Port 0x64 (komut) kapılarını dinliyoruz. Klavyeden bir tuşa basıldığında bize harfin kendisi değil, donanımsal bi sayı gelir. Sürücümüzün içine bir çevirici yazarak bu sayıları harflere dönüştürdük. Böylece işletim sistemimizin ilk gerçek donanım sürücüsünü yazmış olduk.
 
@@ -154,15 +162,4 @@ Sistemimiz tamamen **Modüler** hale geldi. Yarın grafik arayüze (GUI) geçti�
 * Anakarttaki PCI veri yolunu baştan sona tarayarak ekran kartı, ağ kartı gibi cihazları (Vendor ID / Device ID) dinamik olarak bulan bir PCI controller yazdım.
 * Donanımların Base Address Register'larını (BAR) okuyarak hangi I/O portlarından haberleştiklerini sistemin kendisinin bulmasını sağladım. Artık hiçbir donanım portunu kodun içine hardcode yazmak zorunda değilim!
 
-Bölüm 12 ve 13: Grafik Modu (VGA) ve Arayüz (GUI) Temelleri
-Buna Neden İhtiyacımız Vardı?
-
-Bugüne kadar sadece siyah ekrana beyaz harfler yazabiliyorduk. Gerçek bir işletim sistemi gibi pencereler, fare imleci ve tıklanabilir butonlar yapabilmek için grafik moduna geçmemiz şarttı.
-
-1. VGA Grafik Sürücüsü
-
-32-bit korumalı modda (protected mode) çalıştığımız için, ekran çözünürlüğünü değiştiren kolay BIOS komutlarını kullanamayız. Bunun yerine, ekran kartının donanım portlarına doğrudan karmaşık sinyaller göndererek sistemi 320x200 çözünürlüklü grafik moduna zorla geçiren bir sürücü yazdık. Artık ekrana sadece harf değil, istediğimiz renkte pikseller (noktalar) çizebiliyoruz!
-
-2. Nesne Yönelimli Arayüz (GUI) Altyapısı
-
-Ekrana piksel çizebilme yeteneğimizi kullanarak gerçek bir arayüzün temellerini attık. Bir Widget (Arayüz Elemanı) sınıfı oluşturduk ve bunun üzerine Masaüstü (Desktop) ile Pencereleri (Windows) inşa ettik. İşletim sistemimiz artık uzaysal bir farkındalığa sahip: Farenin koordinatlarını takip edebiliyor, ekranda tam olarak hangi pencerenin veya butonun üzerinde gezdiğinizi hesaplayabiliyor ve tıklama işlemlerini (click events) doğru donanıma iletebiliyor.
+=======
