@@ -5,6 +5,7 @@
 #include "keyboard.h"
 #include "mouse.h"
 #include "pci.h"
+#include "vga.h"
 void printf(char* str);
 class PrintfKeyboardEventHandler : public KeyboardEventHandler
 {
@@ -138,6 +139,8 @@ extern "C" void kernel_main(void* multiboot_structure, uint32_t magicnumber)
     
      printf("Initializing Hardware, Stage 3\n");
      interrupts.Activate();
-
+     VideoGraphicsArray vga;
+     vga.SetMode(320, 200, 8);
+     vga.FillRectangle(0, 0, 320, 200, 0x00, 0x00, 0xA8); 
      while(1);
 }
