@@ -50,6 +50,12 @@ This repository contains the source code and my personal dev log for a custom OS
 * Finding the graphics card isn't enough; how do we send pixels and colors to it? This is where the **BAR (Base Address Register)** comes into play. The BAR is the direct communication box of that hardware. By reading the BAR value, our OS can figure out exactly which port address to use to talk to the device.
 
 **In summary:** We taught the system to automatically ask the hardware, *"Who are you, and at what number can I communicate with you?"*
+=======
+### Chapters 10 & 11: PCI & Base Address Registers (BARs)
+
+* Wrote a PCI controller to scan the motherboard's buses, devices, and functions.
+* The OS can now dynamically discover plugged-in hardware (like AMD network chips or VGA graphics cards) using their Vendor and Device IDs.
+* By reading the Base Address Registers (BARs), the kernel automatically figures out which I/O ports or memory maps each device uses. I no longer have to hardcode hardware ports!)
 
 ---
 
@@ -91,6 +97,7 @@ Bu repo, sıfırdan geliştirdiğim işletim sistemi çekirdeğinin (kernel) kay
 * Sürücülerin içindeki amele `printf` kodlarını tamamen sildim; donanımın görevi ekrana yazı yazmak değildir.
 * Olay tabanlı (event-driven) bir mimari kurdum. Artık klavye sürücüsü sadece "tuşa basıldı" eventi fırlatıyor, bu veriyi ekranda gösterme işini Kernel üstleniyor. Bu hamle sistemi ileride pencereli bir GUI'a geçmeye hazır hale getirdi.
 
+<<<<<<< HEAD
 ### Klavyedeki Tuşları Nasıl Okuyoruz?
 * Klavye ile iletişim için Port 0x60 (veri) ve Port 0x64 (komut) kapılarını dinliyoruz. Klavyeden bir tuşa basıldığında bize harfin kendisi değil, donanımsal bi sayı gelir. Sürücümüzün içine bir çevirici yazarak bu sayıları harflere dönüştürdük. Böylece işletim sistemimizin ilk gerçek donanım sürücüsünü yazmış olduk.
 
@@ -129,4 +136,8 @@ Sistemimiz tamamen **Modüler** hale geldi. Yarın grafik arayüze (GUI) geçti�
 * Ekran kartını bulmak yetmez, ona pikselleri ve renkleri nasıl göndereceğiz? İşte burada **BAR (Base Address Register)** devreye giriyor. BAR, o donanımın iletişim kutusudur. İşletim sistemimiz cihazın BAR değerini okuyarak, "Ekran kartıyla haberleşmek istiyorsam verileri şu port adresine göndermeliyim" diyebiliyor.
 
 **Özetle:** Sisteme donanımlara "Sen kimsin ve seninle hangi numaradan haberleşebilirim?" diye otomatik olarak sormayı öğrettik!
+=======
+### Bölüm 10 ve 11: PCI ve BAR (Base Address Registers)
 
+* Anakarttaki PCI veri yolunu baştan sona tarayarak ekran kartı, ağ kartı gibi cihazları (Vendor ID / Device ID) dinamik olarak bulan bir PCI controller yazdım.
+* Donanımların Base Address Register'larını (BAR) okuyarak hangi I/O portlarından haberleştiklerini sistemin kendisinin bulmasını sağladım. Artık hiçbir donanım portunu kodun içine hardcode yazmak zorunda değilim!
