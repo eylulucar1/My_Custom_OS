@@ -57,6 +57,18 @@ This repository contains the source code and my personal dev log for a custom OS
 * The OS can now dynamically discover plugged-in hardware (like AMD network chips or VGA graphics cards) using their Vendor and Device IDs.
 * By reading the Base Address Registers (BARs), the kernel automatically figures out which I/O ports or memory maps each device uses. I no longer have to hardcode hardware ports!)
 
+Chapters 12 & 13: Graphics Mode (VGA) & GUI Framework Basics
+Why did we need this?
+
+Up until now, we could only print plain white text on a black screen. To build a modern operating system with windows, a moving mouse cursor, and clickable buttons, we had to unlock the graphics mode.
+
+1. The VGA Graphics Driver
+
+Since we are running in 32-bit protected mode, we can't cheat by using the easy BIOS interrupts to switch screen resolutions. Instead, we wrote a driver that communicates directly with the graphics card's hardware ports to force the system into a 320x200 graphics mode. Now, instead of just printing ASCII characters, we can draw individual pixels of any color!
+
+2. The Object-Oriented GUI Framework
+
+Using our new pixel-drawing superpower, we laid the foundation for a real graphical user interface. We created a base Widget class and built a Desktop and Window system on top of it. The OS now has a spatial awareness system: it can track mouse coordinates, calculate exactly which window or button you are hovering over, and pass click events to the right object.
 ---
 
 # Kendi İşletim Sistemimi Yazıyorum (C++ & Assembly)
@@ -141,3 +153,16 @@ Sistemimiz tamamen **Modüler** hale geldi. Yarın grafik arayüze (GUI) geçti�
 
 * Anakarttaki PCI veri yolunu baştan sona tarayarak ekran kartı, ağ kartı gibi cihazları (Vendor ID / Device ID) dinamik olarak bulan bir PCI controller yazdım.
 * Donanımların Base Address Register'larını (BAR) okuyarak hangi I/O portlarından haberleştiklerini sistemin kendisinin bulmasını sağladım. Artık hiçbir donanım portunu kodun içine hardcode yazmak zorunda değilim!
+
+Bölüm 12 ve 13: Grafik Modu (VGA) ve Arayüz (GUI) Temelleri
+Buna Neden İhtiyacımız Vardı?
+
+Bugüne kadar sadece siyah ekrana beyaz harfler yazabiliyorduk. Gerçek bir işletim sistemi gibi pencereler, fare imleci ve tıklanabilir butonlar yapabilmek için grafik moduna geçmemiz şarttı.
+
+1. VGA Grafik Sürücüsü
+
+32-bit korumalı modda (protected mode) çalıştığımız için, ekran çözünürlüğünü değiştiren kolay BIOS komutlarını kullanamayız. Bunun yerine, ekran kartının donanım portlarına doğrudan karmaşık sinyaller göndererek sistemi 320x200 çözünürlüklü grafik moduna zorla geçiren bir sürücü yazdık. Artık ekrana sadece harf değil, istediğimiz renkte pikseller (noktalar) çizebiliyoruz!
+
+2. Nesne Yönelimli Arayüz (GUI) Altyapısı
+
+Ekrana piksel çizebilme yeteneğimizi kullanarak gerçek bir arayüzün temellerini attık. Bir Widget (Arayüz Elemanı) sınıfı oluşturduk ve bunun üzerine Masaüstü (Desktop) ile Pencereleri (Windows) inşa ettik. İşletim sistemimiz artık uzaysal bir farkındalığa sahip: Farenin koordinatlarını takip edebiliyor, ekranda tam olarak hangi pencerenin veya butonun üzerinde gezdiğinizi hesaplayabiliyor ve tıklama işlemlerini (click events) doğru donanıma iletebiliyor.
